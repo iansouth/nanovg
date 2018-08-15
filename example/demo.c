@@ -1060,6 +1060,56 @@ void drawScissor(NVGcontext* vg, float x, float y, float t)
 	nvgRestore(vg);
 }
 
+const char* blendToStr(int mode) {
+	if (mode == NVG_SOURCE_OVER)
+		return "NVG_SOURCE_OVER";
+	if (mode == NVG_SOURCE_IN)
+		return "NVG_SOURCE_IN";
+	if (mode == NVG_SOURCE_OUT)
+		return "NVG_SOURCE_OUT";
+	if (mode == NVG_ATOP)
+		return "NVG_ATOP";
+	if (mode == NVG_DESTINATION_OVER)
+		return "NVG_DESTINATION_OVER";
+	if (mode == NVG_DESTINATION_IN)
+		return "NVG_DESTINATION_IN";
+	if (mode == NVG_DESTINATION_OUT)
+		return "NVG_DESTINATION_OUT";
+	if (mode == NVG_DESTINATION_ATOP)
+		return "NVG_DESTINATION_ATOP";
+	if (mode == NVG_LIGHTER)
+		return "NVG_LIGHTER";
+	if (mode == NVG_COPY)
+		return "NVG_COPY";
+	if (mode == NVG_XOR)
+		return "NVG_XOR";
+	if (mode == NVG_MULTIPLY)
+		return "NVG_MULTIPLY";
+	if (mode == NVG_SCREEN)
+		return "NVG_SCREEN";
+	if (mode == NVG_OVERLAY)
+		return "NVG_OVERLAY";
+	if (mode == NVG_DARKEN)
+		return "NVG_DARKEN";
+	if (mode == NVG_LIGHTEN)
+		return "NVG_LIGHTEN";
+	if (mode == NVG_COLORDODGE)
+		return "NVG_COLORDODGE";
+	if (mode == NVG_COLORBURN)
+		return "NVG_COLORBURN";
+	if (mode == NVG_HARDLIGHT)
+		return "NVG_HARDLIGHT";
+	if (mode == NVG_SOFTLIGHT)
+		return "NVG_SOFTLIGHT";
+	if (mode == NVG_DIFFERENCE)
+		return "NVG_DIFFERENCE";
+	if (mode == NVG_EXCLUSION)
+		return "NVG_EXCLUSION";
+	if (mode == NVG_LINEARDODGE)
+		return "NVG_LINEARDODGE";
+	return "";
+}
+
 void renderDemo(NVGcontext* vg, float mx, float my, float width, float height,
 				float t, int blowup, DemoData* data)
 {
@@ -1119,6 +1169,25 @@ void renderDemo(NVGcontext* vg, float mx, float my, float width, float height,
 
 	// Thumbnails box
 	drawThumbnails(vg, 365, popy-30, 160, 300, data->images, 12, t);
+
+	int border = 100;
+	NVGpaint bg = nvgLinearGradient(vg, border,border,border,height-2*border, nvgRGBA(0,0,0,0), nvgRGBA(255,0,0,255));
+
+	// Blend Demo
+	int numBlendModes = NVG_LINEARDODGE-NVG_SOURCE_OVER+1;
+	int mode = NVG_SOURCE_OVER+(((int)(t/3))%numBlendModes);
+	nvgGlobalCompositeOperation(vg, mode);
+	nvgBeginPath(vg);
+	nvgRoundedRect(vg, border,border, width-2*border,height-2*border, border);
+	nvgFillPaint(vg, bg);
+	nvgFill(vg);
+	nvgGlobalCompositeOperation(vg, NVG_SOURCE_OVER);
+	nvgFontSize(vg, 35.0f);
+	nvgFontFace(vg, "sans");
+	nvgFillColor(vg, nvgRGBA(255,255,255,255));
+	const char* blendModeStr = blendToStr(mode);
+	nvgTextAlign(vg,NVG_ALIGN_CENTER|NVG_ALIGN_MIDDLE);
+	nvgText(vg, width/2,height/2,blendModeStr, NULL);
 
 	nvgRestore(vg);
 }

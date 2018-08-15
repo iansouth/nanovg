@@ -109,6 +109,20 @@ enum NVGcompositeOperation {
 	NVG_LIGHTER,
 	NVG_COPY,
 	NVG_XOR,
+
+	// advanced blend modes
+	NVG_MULTIPLY,
+	NVG_SCREEN,
+	NVG_OVERLAY,
+	NVG_DARKEN,
+	NVG_LIGHTEN,
+	NVG_COLORDODGE,
+	NVG_COLORBURN,
+	NVG_HARDLIGHT,
+	NVG_SOFTLIGHT,
+	NVG_DIFFERENCE,
+	NVG_EXCLUSION,
+	NVG_LINEARDODGE
 };
 
 struct NVGcompositeOperationState {
@@ -116,6 +130,7 @@ struct NVGcompositeOperationState {
 	int dstRGB;
 	int srcAlpha;
 	int dstAlpha;
+	int advanced;
 };
 typedef struct NVGcompositeOperationState NVGcompositeOperationState;
 
@@ -648,6 +663,7 @@ typedef struct NVGpath NVGpath;
 struct NVGparams {
 	void* userPtr;
 	int edgeAntiAlias;
+	int advancedBlending;
 	int (*renderCreate)(void* uptr);
 	int (*renderCreateTexture)(void* uptr, int type, int w, int h, int imageFlags, const unsigned char* data);
 	int (*renderDeleteTexture)(void* uptr, int image);

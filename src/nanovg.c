@@ -207,7 +207,8 @@ static void nvg__setDevicePixelRatio(NVGcontext* ctx, float ratio)
 
 static NVGcompositeOperationState nvg__compositeOperationState(int op)
 {
-	int sfactor, dfactor;
+	int sfactor = 0, dfactor = 0;
+	int advanced = 0;
 
 	if (op == NVG_SOURCE_OVER)
 	{
@@ -264,6 +265,10 @@ static NVGcompositeOperationState nvg__compositeOperationState(int op)
 		sfactor = NVG_ONE_MINUS_DST_ALPHA;
 		dfactor = NVG_ONE_MINUS_SRC_ALPHA;
 	}
+	else if(NVG_MULTIPLY <= op && op <= NVG_LINEARDODGE) 
+	{
+		advanced = op;
+	}
 	else
 	{
 		sfactor = NVG_ONE;
@@ -275,6 +280,7 @@ static NVGcompositeOperationState nvg__compositeOperationState(int op)
 	state.dstRGB = dfactor;
 	state.srcAlpha = sfactor;
 	state.dstAlpha = dfactor;
+	state.advanced = advanced;
 	return state;
 }
 
@@ -1040,6 +1046,7 @@ void nvgGlobalCompositeBlendFuncSeparate(NVGcontext* ctx, int srcRGB, int dstRGB
 	op.dstRGB = dstRGB;
 	op.srcAlpha = srcAlpha;
 	op.dstAlpha = dstAlpha;
+	op.advanced = 0;
 
 	NVGstate* state = nvg__getState(ctx);
 	state->compositeOperation = op;

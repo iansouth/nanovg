@@ -156,6 +156,7 @@ struct GLNVGblend
 	GLenum dstRGB;
 	GLenum srcAlpha;
 	GLenum dstAlpha;
+	GLenum advanced;
 };
 typedef struct GLNVGblend GLNVGblend;
 
@@ -333,13 +334,22 @@ static void glnvg__blendFuncSeparate(GLNVGcontext* gl, const GLNVGblend* blend)
 	if ((gl->blendFunc.srcRGB != blend->srcRGB) ||
 		(gl->blendFunc.dstRGB != blend->dstRGB) ||
 		(gl->blendFunc.srcAlpha != blend->srcAlpha) ||
-		(gl->blendFunc.dstAlpha != blend->dstAlpha)) {
+		(gl->blendFunc.dstAlpha != blend->dstAlpha) ||
+		(gl->blendFunc.advanced != blend->advanced)) {
 
 		gl->blendFunc = *blend;
-		glBlendFuncSeparate(blend->srcRGB, blend->dstRGB, blend->srcAlpha,blend->dstAlpha);
+#endif
+		if(blend->advanced)
+		{
+			glBlendEquation(blend->advanced);
+		}
+		else 
+		{
+			glBlendEquation(GL_FUNC_ADD);
+ 			glBlendFuncSeparate(blend->srcRGB, blend->dstRGB, blend->srcAlpha,blend->dstAlpha);
+		}
+#if NANOVG_GL_USE_STATE_FILTER
 	}
-#else
-	glBlendFuncSeparate(blend->srcRGB, blend->dstRGB, blend->srcAlpha,blend->dstAlpha);
 #endif
 }
 
@@ -1147,6 +1157,34 @@ static GLenum glnvg_convertBlendFuncFactor(int factor)
 		return GL_SRC_ALPHA_SATURATE;
 	return GL_INVALID_ENUM;
 }
+static GLenum glnvg_convertBlendEquationAdvanced(int advanced)
+{
+	if (advanced == NVG_MULTIPLY)
+		return GL_MULTIPLY_KHR;
+	if (advanced == NVG_SCREEN)
+		return GL_SCREEN_KHR;
+	if (advanced == NVG_OVERLAY)
+		return GL_OVERLAY_KHR;
+	if (advanced == NVG_DARKEN)
+		return GL_DARKEN_KHR;
+	if (advanced == NVG_LIGHTEN)
+		return GL_LIGHTEN_KHR;
+	if (advanced == NVG_COLORDODGE)
+		return GL_COLORDODGE_KHR;
+	if (advanced == NVG_COLORBURN)
+		return GL_COLORBURN_KHR;
+	if (advanced == NVG_HARDLIGHT)
+		return GL_HARDLIGHT_KHR;
+	if (advanced == NVG_SOFTLIGHT)
+		return GL_SOFTLIGHT_KHR;
+	if (advanced == NVG_DIFFERENCE)
+		return GL_DIFFERENCE_KHR;
+	if (advanced == NVG_EXCLUSION)
+		return GL_EXCLUSION_KHR;
+	if (advanced == NVG_LINEARDODGE)
+		return GL_LINEARDODGE_NV;
+	return 0;
+}
 
 static GLNVGblend glnvg__blendCompositeOperation(NVGcompositeOperationState op)
 {
@@ -1155,6 +1193,8 @@ static GLNVGblend glnvg__blendCompositeOperation(NVGcompositeOperationState op)
 	blend.dstRGB = glnvg_convertBlendFuncFactor(op.dstRGB);
 	blend.srcAlpha = glnvg_convertBlendFuncFactor(op.srcAlpha);
 	blend.dstAlpha = glnvg_convertBlendFuncFactor(op.dstAlpha);
+	blend.advanced = glnvg_convertBlendEquationAdvanced(op.advanced);
+
 	if (blend.srcRGB == GL_INVALID_ENUM || blend.dstRGB == GL_INVALID_ENUM || blend.srcAlpha == GL_INVALID_ENUM || blend.dstAlpha == GL_INVALID_ENUM)
 	{
 		blend.srcRGB = GL_ONE;
@@ -1580,8 +1620,30 @@ NVGcontext* nvgCreateGLES3(int flags)
 	params.renderDelete = glnvg__renderDelete;
 	params.userPtr = gl;
 	params.edgeAntiAlias = flags & NVG_ANTIALIAS ? 1 : 0;
+	params.advancedBlending = 0;
 
 	gl->flags = flags;
+
+#ifdef GL_NUM_EXTENSIONS	
+	int numExts = 0;
+	glGetIntegerv(GL_NUM_EXTENSIONS, &numExts);
+	for(int i = 0; i < numExts; i++) {
+ 		const char* ext = glGetStringi(GL_EXTENSIONS, i);
+#else // GL_NUM_EXTENSIONS is not available in gles2
+	const char* extensions = glGetString(GL_EXTENSIONS);
+	char* nextExt = strtok(extensions, " ");
+	while(nextExt != NULL) {
+		char* ext = nextExt;
+		nextExt = strtok(NULL, " ");
+#endif
+		int blending = 0;
+		blending = blending || (strcmp(ext, "GL_KHR_blend_equation_advanced")==0);
+		blending = blending || (strcmp(ext, "GL_NV_blend_equation_advanced")==0);
+
+		if(blending) {
+			params.advancedBlending = 1;
+		}
+	}
 
 	ctx = nvgCreateInternal(&params);
 	if (ctx == NULL) goto error;
