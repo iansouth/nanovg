@@ -1601,6 +1601,8 @@ NVGcontext* nvgCreateGLES3(int flags)
 {
 	NVGparams params;
 	NVGcontext* ctx = NULL;
+	int numExts = 0;
+
 	GLNVGcontext* gl = (GLNVGcontext*)malloc(sizeof(GLNVGcontext));
 	if (gl == NULL) goto error;
 	memset(gl, 0, sizeof(GLNVGcontext));
@@ -1625,12 +1627,11 @@ NVGcontext* nvgCreateGLES3(int flags)
 	gl->flags = flags;
 
 #ifdef GL_NUM_EXTENSIONS	
-	int numExts = 0;
 	glGetIntegerv(GL_NUM_EXTENSIONS, &numExts);
 	for(int i = 0; i < numExts; i++) {
- 		const char* ext = glGetStringi(GL_EXTENSIONS, i);
+		const char* ext = (const char*)glGetStringi(GL_EXTENSIONS, i);
 #else // GL_NUM_EXTENSIONS is not available in gles2
-	const char* extensions = glGetString(GL_EXTENSIONS);
+	const char* extensions = (const char*)glGetString(GL_EXTENSIONS);
 	char* nextExt = strtok(extensions, " ");
 	while(nextExt != NULL) {
 		char* ext = nextExt;
